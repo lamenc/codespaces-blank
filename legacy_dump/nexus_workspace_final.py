@@ -23,6 +23,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger("NexusKernel")
 
+# Global Event Ring Buffer simulating real-time background notification feeds
+NOTIFICATION_BUFFER = [
+    {"platform": "Discord", "sender": "AlphaTeam", "message": "The production build pipeline just completed successfully."},
+    {"platform": "Instagram", "sender": "alex_dev", "message": "Are we still on for the system architecture seminar at 4 PM?"},
+    {"platform": "Gmail", "sender": "security@github.com", "message": "Alert: New login detected on a Linux instance."}
+]
+
 # ==========================================
 # 1. AUTONOMOUS EMBEDDED BROWSER DRIVER
 # ==========================================
@@ -143,9 +150,9 @@ class EliteSovereignNodes:
         file_ctx = state.get("crashed_file_context", "")
         retry_count = state.get("retry_count", 0)
 
-        # Reactive Single-Step System Design Instructions (Updated for Native OS Control)
+        # Reactive Single-Step Instructions updated for Communication Ingress
         system_instruction = (
-            "You are the central runtime planner of an elite developer agent engine with deep system and OS access.\n"
+            "You are the central runtime planner of an elite developer agent engine with deep system, browser, and notification stream access.\n"
             "Review your structural project manifest and execution logs continuously.\n"
             "CRITICAL: Do not plan multiple steps ahead. Provide exactly ONE next logical tool step based on the context.\n"
             "If the user's objective has been fully completed successfully, return an empty steps array: {\"steps\": []}.\n\n"
@@ -156,15 +163,17 @@ class EliteSovereignNodes:
             '  ]\n'
             "}\n\n"
             "Available Highly-Optimized System Tools:\n"
-            "1. 'fs.write_file' -> Args: {'filename': str, 'content': str} (Writes/overwrites whole files)\n"
-            "2. 'fs.read_file' -> Args: {'filename': str} (Reads code blocks into context)\n"
-            "3. 'fs.delete_file' -> Args: {'filename': str} (Permanently removes a file from the workspace)\n"
-            "4. 'fs.copy_file' -> Args: {'source': str, 'destination': str} (Copies files across directories)\n"
-            "5. 'fs.surgical_patch' -> Args: {'filename': str, 'search_block': str, 'replace_block': str} (Surgically updates blocks inside files)\n"
-            "6. 'workspace.search' -> Args: {'pattern': str, 'extension': str} (Grep searching through active code files)\n"
-            "7. 'terminal.execute' -> Args: {'command': str} (Launches non-blocking sub-processes for testing/compiling/git/pip)\n"
-            "8. 'web.browse' -> Args: {'url': str} (Use this to open URLs, read websites, or scrape documentation online)\n"
-            "9. 'os.launch_app' -> Args: {'app_name': str} (Launches host GUI applications or background utility software triggers natively)\n\n"
+            "1. 'fs.write_file' -> Args: {'filename': str, 'content': str}\n"
+            "2. 'fs.read_file' -> Args: {'filename': str}\n"
+            "3. 'fs.delete_file' -> Args: {'filename': str}\n"
+            "4. 'fs.copy_file' -> Args: {'source': str, 'destination': str}\n"
+            "5. 'fs.surgical_patch' -> Args: {'filename': str, 'search_block': str, 'replace_block': str}\n"
+            "6. 'workspace.search' -> Args: {'pattern': str, 'extension': str}\n"
+            "7. 'terminal.execute' -> Args: {'command': str}\n"
+            "8. 'web.browse' -> Args: {'url': str}\n"
+            "9. 'os.launch_app' -> Args: {'app_name': str}\n"
+            "10. 'comm.fetch_inbox' -> Args: {} (Checks recent incoming emails from Gmail headers)\n"
+            "11. 'comm.check_notifications' -> Args: {} (Pulls real-time alert data from communication vectors like Discord/Instagram)\n\n"
             "CRITICAL: Output valid raw JSON only. Never include conversational chatter or markdown packaging wraps."
         )
 
@@ -241,7 +250,7 @@ class EliteSovereignNodes:
             else:
                 error_signal = f"fs.read_file failure: Target path '{filename}' does not exist."
 
-        # Tool 3: Destructive File Deletion (New)
+        # Tool 3: Destructive File Deletion
         elif current_task["tool_name"] == "fs.delete_file":
             filename = args.get("filename")
             try:
@@ -258,7 +267,7 @@ class EliteSovereignNodes:
             except Exception as e:
                 error_signal = f"fs.delete_file system collision: {str(e)}"
 
-        # Tool 4: File Copy Operation (New)
+        # Tool 4: File Copy Operation
         elif current_task["tool_name"] == "fs.copy_file":
             src, dest = args.get("source"), args.get("destination")
             try:
@@ -334,24 +343,41 @@ class EliteSovereignNodes:
                 logger.error(f" -> Browser driver exception: {str(e)}")
                 logs.append(f"Tool web.browse failed with error: {str(e)}")
 
-        # Tool 9: Native OS Software Application Launcher (New)
+        # Tool 9: Native OS Software Application Launcher
         elif current_task["tool_name"] == "os.launch_app":
             app = args.get("app_name", "")
             try:
                 logger.info(f" -> Dispatching OS process kernel branch for app: {app}")
-                # Uses standard background execution loops so the workspace doesn't freeze while the software runs
                 if sys.platform == "win32":
                     asyncio.create_task(asyncio.create_subprocess_shell(f"start {app}"))
                 elif sys.platform == "darwin":
                     asyncio.create_task(asyncio.create_subprocess_shell(f"open -a {app}"))
                 else:
-                    # Linux / Codespaces path wrapper (e.g., launching command line interface services or xdg targets)
                     asyncio.create_task(asyncio.create_subprocess_shell(f"{app} &"))
-                
                 msg = f"Successfully broadcast asynchronous OS launch signal for software: {app}"
                 logs.append(msg)
             except Exception as e:
                 error_signal = f"os.launch_app system fault: {str(e)}"
+
+        # Tool 10: Fetch Emails / Gmail Ingress Core (New)
+        elif current_task["tool_name"] == "comm.fetch_inbox":
+            try:
+                gmail_logs = [alert for alert in NOTIFICATION_BUFFER if alert["platform"] == "Gmail"]
+                msg = f"Polled target mail ledger framework. Found {len(gmail_logs)} unread messages."
+                logger.info(f" -> {msg}")
+                logs.append(f"Unread Email Core Data: {json.dumps(gmail_logs)}")
+            except Exception as e:
+                error_signal = f"comm.fetch_inbox collision: {str(e)}"
+
+        # Tool 11: Real-time Communication Platforms Alert Ingress (New)
+        elif current_task["tool_name"] == "comm.check_notifications":
+            try:
+                social_logs = [alert for alert in NOTIFICATION_BUFFER if alert["platform"] in ["Discord", "Instagram"]]
+                msg = f"Scraped social platform notification buffers. Found {len(social_logs)} active events."
+                logger.info(f" -> {msg}")
+                logs.append(f"Active Notifications Stream Payload: {json.dumps(social_logs)}")
+            except Exception as e:
+                error_signal = f"comm.check_notifications structural fault: {str(e)}"
 
         if error_signal:
             retry_count += 1
@@ -412,7 +438,7 @@ async def start_workspace():
     print("\n" + "="*70)
     print("  NEXUSKERNEL WORKSPACE SYSTEM CORE INTERACTIVE REPL ACTIVE")
     print("  Orchestration: LangGraph Reactive Step Graph Architecture (ReAct)")
-    print("  Capabilities: Grep, Patches, Async Shell, Playwright Web, Native OS Control")
+    print("  Capabilities: Grep, Patches, Async Shell, Playwright Web, OS Control, Comm Ingress")
     print("="*70 + "\n")
 
     global_session_context = {
